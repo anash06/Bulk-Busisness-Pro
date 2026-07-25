@@ -418,9 +418,9 @@ class PlacesAPI:
 
                                     // Extract phone number from card text
                                     let phone = '';
-                                    let phoneMatch = cardText.match(/(\\+?\\d{1,4}[-.\\s]?\\(?\\d{2,4}\\)?[-.\\s]?\\d{3,4}[-.\\s]?\\d{3,4})/);
-                                    if (phoneMatch && phoneMatch[1].length >= 8 && !phoneMatch[1].includes('0000')) {
-                                        phone = phoneMatch[1].trim();
+                                    let phoneMatch = cardText.match(/(?:(?:\\+|0{0,2})91[\\s-]?)?[6-9]\\d{9}|0\\d{2,4}[\\s-]?\\d{6,8}|\\+?\\d{1,4}[\\s.-]?\\(?\\d{2,5}\\)?[\\s.-]?\\d{3,5}[\\s.-]?\\d{3,5}/);
+                                    if (phoneMatch && phoneMatch[0].length >= 8 && !phoneMatch[0].includes('00000')) {
+                                        phone = phoneMatch[0].trim();
                                     }
 
                                     // Extract business category text from card
@@ -440,8 +440,8 @@ class PlacesAPI:
 
                                     // Extract website link
                                     let web = '';
-                                    let webEl = card.querySelector('a[href*="http"]:not([href*="google.com"])');
-                                    if (webEl) web = webEl.getAttribute('href');
+                                    let webEl = card.querySelector('a[aria-label*="website" i], a[data-value="Website"], a[href^="http"]:not([href*="google.com"]):not([href*="gstatic.com"]):not([href*="ggpht.com"])');
+                                    if (webEl) web = webEl.getAttribute('href') || '';
 
                                     // Coordinates from URL
                                     let lat = 0.0, lng = 0.0;
@@ -489,29 +489,25 @@ class PlacesAPI:
                             logger.info(f"Playwright Scraper: Extracted {len(feed_items_data)} items directly from feed DOM in 1 pass.")
                             parsed_places.extend(feed_items_data)
 
-                        # If 1-pass extraction yielded fewer than 5 items, fallback to fast detail loads for top 5
-                        if len(parsed_places) < 5:
-                            links_loc = page.locator('a[href*="/maps/place/"]')
-                            links_count = links_loc.count()
-                            place_urls = []
-                            for i in range(links_count):
-                                href = links_loc.nth(i).get_attribute('href')
-                                if href and href not in place_urls:
-                                    place_urls.append(href)
-
-                            target_urls = place_urls[:8]
-                            for idx, href in enumerate(target_urls):
-                                try:
-                                    logger.info(f"Playwright Scraper: Fallback detail load ({idx+1}/{len(target_urls)}) -> {href}")
-                                    page.goto(href, wait_until="domcontentloaded", timeout=6000)
-                                    biz_info = self._extract_details_from_page(page, href)
-                                    if biz_info and biz_info["name"] != "Unknown Business":
-                                        # Deduplicate by name
-                                        if not any(p.get("name") == biz_info["name"] for p in parsed_places):
-                                            parsed_places.append(biz_info)
-                                except Exception as ex:
-                                    logger.error(f"Error scraping detail page {href}: {ex}")
-                                    continue
+                        # Quick detail enrichment for items missing phone/website (up to top 10 items)
+                        missing_details_items = [p for p in parsed_places if not p.get("phone_number") or not p.get("website")][:10]
+                        if missing_details_items:
+                            logger.info(f"Playwright Scraper: Enriching details for {len(missing_details_items)} items...")
+                            for idx, item in enumerate(missing_details_items):
+                                href = item.get("maps_url")
+                                if href and "google.com/maps" in href:
+                                    try:
+                                        page.goto(href, wait_until="domcontentloaded", timeout=4000)
+                                        details = self._extract_details_from_page(page, href)
+                                        if details.get("phone_number"):
+                                            item["phone_number"] = details["phone_number"]
+                                            item["international_phone_number"] = details["phone_number"]
+                                        if details.get("website"):
+                                            item["website"] = details["website"]
+                                        if details.get("full_address"):
+                                            item["full_address"] = details["full_address"]
+                                    except Exception:
+                                        continue
 
                 browser.close()
                 log_api_call("playwright_search", url, "200")

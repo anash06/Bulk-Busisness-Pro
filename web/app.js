@@ -156,8 +156,9 @@ function renderTable() {
         tbody.innerHTML = pageRows.map((biz, idx) => {
             const rowNum = startIdx + idx + 1;
             const rating = biz.rating ? `<span class="rating-badge">★ ${biz.rating.toFixed(1)}</span>` : 'N/A';
-            const phone = biz.phone_number ? `<a href="tel:${biz.phone_number}">${biz.phone_number}</a>` : '<span class="text-muted">N/A</span>';
-            const web = biz.website ? `<a href="${biz.website}" target="_blank">Link ↗</a>` : '<span class="text-muted">N/A</span>';
+            const phone = biz.phone_number ? `<a href="tel:${escapeHtml(biz.phone_number)}">${escapeHtml(biz.phone_number)}</a>` : '<span class="text-muted">N/A</span>';
+            const webUrl = biz.website ? (biz.website.startsWith('http') ? biz.website : 'https://' + biz.website) : '';
+            const web = webUrl ? `<a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener">Website ↗</a>` : '<span class="text-muted">N/A</span>';
             
             return `
                 <tr>

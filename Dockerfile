@@ -6,7 +6,7 @@ WORKDIR /app
 # Copy requirement files
 COPY requirements.txt .
 
-# Install dependencies
+# Install dependencies matching Playwright 1.40.0
 RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 

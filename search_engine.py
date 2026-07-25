@@ -286,7 +286,7 @@ class SearchEngine:
 
                     self.processed_grid_points = idx + 1
                     
-                    if lat == 0.0 and lng == 0.0:
+                    if not AppSettings.get_api_key() or (lat == 0.0 and lng == 0.0):
                         search_keyword = f"{keyword} in {city}"
                     else:
                         search_keyword = keyword
@@ -378,15 +378,11 @@ class SearchEngine:
                             # Coordinate-based filter: drop results outside the auto-computed city boundary.
                             # Google Maps already centers the search on the geocoded city, so most results
                             # are local. This guard removes distant outliers (e.g. Chennai when searching Valinokkam).
-                            if auto_radius > 0 and biz_lat and biz_lng and biz_lat != 0.0 and biz_lng != 0.0 and center_lat != 0.0 and center_lng != 0.0:
+                            if biz_lat and biz_lng and biz_lat != 0.0 and biz_lng != 0.0 and center_lat != 0.0 and center_lng != 0.0:
                                 dist = calculate_distance(center_lat, center_lng, biz_lat, biz_lng)
-                                if dist > auto_radius:
-                                    logger.info(f"Filtered out '{biz_name}' — {dist:.0f}m exceeds city boundary ({auto_radius}m)")
-                                    continue
-                                else:
-                                    logger.info(f"Accepted '{biz_name}' at {dist:.0f}m")
+                                logger.info(f"Accepted '{biz_name}' at {dist:.0f}m")
                             else:
-                                logger.info(f"Accepted '{biz_name}' (no coord filter available)")
+                                logger.info(f"Accepted '{biz_name}'")
 
                             self.progress_queue.put({
                                 "status": "business_found",

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>Bulk Business Search & Export Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <path d="M11 8v6M8 11h6"></path>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>Bulk Business Pro</h1>
+                    <span class="version-badge">v1.0 Mobile</span>
+                </div>
+            </div>
+
+            <!-- Desktop Nav Tabs -->
+            <nav class="desktop-nav">
+                <button class="nav-btn active" data-tab="dashboard-tab">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-btn" data-tab="search-tab">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <span>Search & Extract</span>
+                </button>
+                <button class="nav-btn" data-tab="settings-tab">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <div class="header-status">
+                <span class="status-pill" id="global-status-pill">
+                    <span class="status-dot"></span>
+                    <span id="global-status-text">Ready</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- TAB 1: DASHBOARD -->
+            <section id="dashboard-tab" class="tab-panel active">
+                <div class="panel-header">
+                    <h2>System Analytics Dashboard</h2>
+                    <p class="panel-sub">Real-time stats and extraction insights</p>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card cyan">
+                        <div class="card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">Total Found</span>
+                            <span class="card-value" id="dash-val-total">0</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card amber">
+                        <div class="card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">Average Rating</span>
+                            <span class="card-value" id="dash-val-rating">0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card blue">
+                        <div class="card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">With Website</span>
+                            <span class="card-value" id="dash-val-websites">0</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card green">
+                        <div class="card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">With Phone</span>
+                            <span class="card-value" id="dash-val-phones">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions & Status -->
+                <div class="dashboard-bottom-grid">
+                    <div class="glass-card">
+                        <h3>Quick Controls</h3>
+                        <div class="action-btn-row">
+                            <button class="btn btn-primary" onclick="switchToTab('search-tab')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Start New Search
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportData('xlsx')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Download Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3>Engine Information</h3>
+                        <ul class="info-list" id="dash-sys-info">
+                            <li><span class="lbl">API Status:</span> <span class="val green-txt">Connected</span></li>
+                            <li><span class="lbl">Engine Mode:</span> <span class="val">Playwright / Google Places API</span></li>
+                            <li><span class="lbl">Export Path:</span> <span class="val" id="dash-export-folder">Downloads</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: SEARCH & EXTRACT -->
+            <section id="search-tab" class="tab-panel">
+                <div class="panel-header">
+                    <h2>Search & Extract Businesses</h2>
+                    <p class="panel-sub">Run targeted spatial business extractions</p>
+                </div>
+
+                <!-- Search Input Form Card -->
+                <div class="glass-card form-card">
+                    <form id="search-form" onsubmit="handleStartSearch(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="input-keywords">Keywords (comma-separated):</label>
+                                <div class="input-with-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <input type="text" id="input-keywords" placeholder="e.g. gym, dentist, hospital" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-cities">Cities / Locations:</label>
+                                <div class="input-with-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    <input type="text" id="input-cities" placeholder="e.g. New York, Chicago" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input-radius">Radius (meters): <span id="radius-val">2000m</span></label>
+                                <input type="range" id="input-radius" min="500" max="20000" step="500" value="2000" oninput="document.getElementById('radius-val').innerText=this.value+'m'">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success btn-block" id="btn-start-search">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Start Bulk Search
+                            </button>
+                            <button type="button" class="btn btn-danger btn-block hidden" id="btn-stop-search" onclick="handleStopSearch()">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                                Stop Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Progress Bar Card -->
+                <div class="glass-card progress-card hidden" id="progress-card">
+                    <div class="progress-header">
+                        <span class="progress-title" id="progress-status-txt">Status: Searching...</span>
+                        <span class="progress-stats" id="progress-stats-txt">Grid: 0/0 | Found: 0</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Results & Data Table Card -->
+                <div class="glass-card table-card">
+                    <div class="table-toolbar">
+                        <div class="toolbar-search">
+                            <input type="text" id="table-filter-search" placeholder="Search results..." onkeyup="renderTable()">
+                        </div>
+
+                        <div class="toolbar-filters">
+                            <select id="filter-status" onchange="renderTable()">
+                                <option value="">All Statuses</option>
+                                <option value="Active">Active</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="filter-has-phone" onchange="renderTable()"> Has Phone
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="filter-has-website" onchange="renderTable()"> Has Website
+                            </label>
+                        </div>
+
+                        <div class="toolbar-exports">
+                            <button class="btn btn-xs btn-excel" onclick="exportData('xlsx')">Excel</button>
+                            <button class="btn btn-xs btn-csv" onclick="exportData('csv')">CSV</button>
+                            <button class="btn btn-xs btn-json" onclick="exportData('json')">JSON</button>
+                            <button class="btn btn-xs btn-clear" onclick="clearResults()">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Responsive Table Wrapper -->
+                    <div class="table-responsive">
+                        <table class="data-table" id="results-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th onclick="sortTable('name')">Business Name ⇕</th>
+                                    <th onclick="sortTable('type')">Type ⇕</th>
+                                    <th>Status</th>
+                                    <th>Phone</th>
+                                    <th>Website</th>
+                                    <th onclick="sortTable('rating')">Rating ⇕</th>
+                                    <th onclick="sortTable('reviews')">Reviews ⇕</th>
+                                    <th>City</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <tr>
+                                    <td colspan="9" class="empty-state">No business records found. Start a search above!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table Footer Pagination -->
+                    <div class="table-footer">
+                        <span id="table-count-info">Showing 0 businesses</span>
+                        <div class="pagination">
+                            <button class="btn btn-xs" id="btn-prev-page" onclick="changePage(-1)">◀ Prev</button>
+                            <span id="page-num-display">Page 1</span>
+                            <button class="btn btn-xs" id="btn-next-page" onclick="changePage(1)">Next ▶</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SETTINGS -->
+            <section id="settings-tab" class="tab-panel">
+                <div class="panel-header">
+                    <h2>Preferences & Settings</h2>
+                    <p class="panel-sub">Configure scraping behavior and API credentials</p>
+                </div>
+
+                <div class="glass-card settings-card">
+                    <form id="settings-form" onsubmit="saveSettings(event)">
+                        <div class="form-group">
+                            <label for="set-api-key">Google Places API Key (Optional):</label>
+                            <input type="password" id="set-api-key" placeholder="AIzaSy...">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="set-export-path">Default Export Path:</label>
+                            <input type="text" id="set-export-path" placeholder="/path/to/downloads">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label for="set-radius">Default Radius (m):</label>
+                                <input type="number" id="set-radius" value="2000">
+                            </div>
+
+                            <div class="form-group half">
+                                <label for="set-delay">Request Delay (sec):</label>
+                                <input type="number" step="0.1" id="set-delay" value="0.5">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="set-browser-mode">Scraper Mode:</label>
+                            <select id="set-browser-mode">
+                                <option value="headless">Hidden (Headless)</option>
+                                <option value="headful">Visible (Headful)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">Save Preferences</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <!-- Mobile Bottom Navigation Bar -->
+        <nav class="mobile-bottom-nav">
+            <button class="bottom-nav-btn active" data-tab="dashboard-tab">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Dashboard</span>
+            </button>
+            <button class="bottom-nav-btn" data-tab="search-tab">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Search</span>
+            </button>
+            <button class="bottom-nav-btn" data-tab="settings-tab">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

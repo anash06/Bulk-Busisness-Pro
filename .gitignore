@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# App Data & Logs
+data/*.db
+data/test_database.db
+data/exports/
+logs/
+*.log
+
+# Build & Dist
+build/
+dist/
+*.spec
+playwright-browsers/
+.pytest_cache/
+scratch/

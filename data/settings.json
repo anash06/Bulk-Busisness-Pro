@@ -1,0 +1,9 @@
+{
+    "headless": "True",
+    "api_key": "",
+    "export_folder": "C:\\Users\\ELCOT\\Downloads",
+    "search_radius": "10000",
+    "request_delay": "0.5",
+    "theme": "Light",
+    "color_theme": "green"
+}

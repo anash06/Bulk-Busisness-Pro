@@ -1,8 +1,10 @@
 # Dockerfile for free cloud hosting (Render, Koyeb, Hugging Face)
 FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
 
-# Point Playwright to standard pre-installed browser directory
+# Point Playwright to standard pre-installed browser directory and force unbuffered logging
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
 
 WORKDIR /app
 

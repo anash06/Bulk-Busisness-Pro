@@ -77,9 +77,25 @@ async function fetchResults() {
     }
 }
 
+// Toggle Light / Dark mode
+function toggleTheme() {
+    const body = document.body;
+    const btn = document.getElementById('theme-toggle');
+    if (body.classList.contains('light-theme')) {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+        if (btn) btn.innerText = '🌙 Mode';
+    } else {
+        body.classList.remove('dark-theme');
+        body.classList.add('light-theme');
+        if (btn) btn.innerText = '☀️ Mode';
+    }
+}
+
 // Render data table with sorting, filtering, and pagination
 function renderTable() {
-    const searchVal = (document.getElementById('table-filter-search')?.value || '').toLowerCase().strip ? (document.getElementById('table-filter-search')?.value || '').toLowerCase().trim() : '';
+    const searchVal = (document.getElementById('table-filter-search')?.value || '').toLowerCase().trim();
+    const locationVal = (document.getElementById('filter-location')?.value || '').toLowerCase().trim();
     const statusVal = document.getElementById('filter-status')?.value || '';
     const hasPhoneOnly = document.getElementById('filter-has-phone')?.checked || false;
     const hasWebOnly = document.getElementById('filter-has-website')?.checked || false;
@@ -91,6 +107,13 @@ function renderTable() {
             const matchCity = (biz.city || '').toLowerCase().includes(searchVal);
             const matchType = (biz.type || '').toLowerCase().includes(searchVal);
             if (!matchName && !matchCity && !matchType) return false;
+        }
+
+        if (locationVal) {
+            const cityStr = (biz.city || '').toLowerCase();
+            const stateStr = (biz.state || '').toLowerCase();
+            const addrStr = (biz.full_address || '').toLowerCase();
+            if (!cityStr.includes(locationVal) && !stateStr.includes(locationVal) && !addrStr.includes(locationVal)) return false;
         }
 
         if (statusVal) {

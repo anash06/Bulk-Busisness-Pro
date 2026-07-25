@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
 </head>
-<body class="dark-theme">
+<body class="light-theme">
     <div class="app-container">
         <!-- Top Navigation Header -->
         <header class="app-header">
@@ -45,6 +45,9 @@
             </nav>
 
             <div class="header-status">
+                <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+                    ☀️ Mode
+                </button>
                 <span class="status-pill" id="global-status-pill">
                     <span class="status-dot"></span>
                     <span id="global-status-text">Ready</span>
@@ -196,6 +199,7 @@
                         </div>
 
                         <div class="toolbar-filters">
+                            <input type="text" id="filter-location" placeholder="📍 Filter City / Location..." onkeyup="renderTable()" class="filter-input-sm">
                             <select id="filter-status" onchange="renderTable()">
                                 <option value="">All Statuses</option>
                                 <option value="Active">Active</option>

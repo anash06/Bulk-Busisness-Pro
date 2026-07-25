@@ -24,6 +24,7 @@ from config import APP_NAME, APP_VERSION, PLACE_TYPES, WINDOW_MIN_WIDTH, WINDOW_
 from settings import AppSettings
 from search_engine import SearchEngine
 from exporter import Exporter
+from geocoder import extract_city_from_address
 
 class BusinessSearchGUI(ctk.CTk):
     def __init__(self):
@@ -887,6 +888,10 @@ class BusinessSearchGUI(ctk.CTk):
                 "CLOSED_PERMANENTLY": "Permanently Closed"
             }
             status_str = status_mapping.get(status_raw, status_raw.title().replace("_", " "))
+            
+            city_val = biz.get("city") or ""
+            if not city_val or city_val in ["N/A", "Unknown", ""]:
+                city_val = extract_city_from_address(biz.get("full_address", ""))
 
             self.tree.insert(
                 "",
@@ -900,7 +905,7 @@ class BusinessSearchGUI(ctk.CTk):
                     biz.get("website") or "N/A",
                     rating_str,
                     reviews_str,
-                    biz.get("city") or "N/A",
+                    city_val.strip().title() if city_val else "N/A",
                     biz.get("state") or "N/A"
                 )
             )

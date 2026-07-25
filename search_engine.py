@@ -25,7 +25,7 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return R * c
 
 # Database and History modules removed
-from geocoder import Geocoder, GeocodingError
+from geocoder import Geocoder, GeocodingError, extract_city_from_address
 from places_api import PlacesAPI, PlacesAPIError
 from config import DEFAULT_GRID_OVERLAP
 from settings import AppSettings
@@ -356,9 +356,13 @@ class SearchEngine:
                             biz_lat = biz_info.get("latitude")
                             biz_lng = biz_info.get("longitude")
 
+                            # Populate clean city from full address or current search city
+                            city_val = biz_info.get("city")
+                            if not city_val or city_val.lower() in ["n/a", "unknown", ""]:
+                                city_val = extract_city_from_address(biz_info.get("full_address", ""), fallback_city=self.current_city)
+                            biz_info["city"] = city_val.strip().title() if city_val else self.current_city.strip().title()
+
                             # Coordinate-based filter: drop results outside the auto-computed city boundary.
-                            # Google Maps already centers the search on the geocoded city, so most results
-                            # are local. This guard removes distant outliers (e.g. Chennai when searching Valinokkam).
                             if biz_lat and biz_lng and biz_lat != 0.0 and biz_lng != 0.0 and center_lat != 0.0 and center_lng != 0.0:
                                 dist = calculate_distance(center_lat, center_lng, biz_lat, biz_lng)
                                 logger.info(f"Accepted '{biz_name}' at {dist:.0f}m")

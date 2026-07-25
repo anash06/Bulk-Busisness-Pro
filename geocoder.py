@@ -11,6 +11,38 @@ from logger import logger
 from database import log_api_call
 from settings import AppSettings
 
+import re
+
+INDIAN_STATES = {
+    "tamil nadu", "kerala", "karnataka", "andhra pradesh", "telangana", "maharashtra",
+    "gujarat", "rajasthan", "punjab", "haryana", "uttar pradesh", "bihar", "west bengal",
+    "madhya pradesh", "goa", "delhi", "assam", "odisha", "jharkhand", "chhattisgarh",
+    "uttarakhand", "himachal pradesh", "jammu and kashmir", "ladakh", "puducherry"
+}
+
+def extract_city_from_address(full_address: str, fallback_city: str = "") -> str:
+    """Extracts clean city name directly from full address string."""
+    if not full_address:
+        return fallback_city.strip().title() if fallback_city else "N/A"
+    
+    cleaned = re.sub(r'\b(india|usa|united states|uk)\b', '', str(full_address), flags=re.IGNORECASE).strip()
+    parts = [p.strip() for p in cleaned.split(",") if p.strip()]
+    
+    if not parts:
+        return fallback_city.strip().title() if fallback_city else "N/A"
+
+    for i in range(len(parts) - 1, -1, -1):
+        part = parts[i]
+        clean_part = re.sub(r'\b\d{5,6}\b', '', part).strip()
+        clean_lower = clean_part.lower()
+
+        if not clean_part or clean_lower in INDIAN_STATES:
+            continue
+
+        return clean_part.title()
+
+    return fallback_city.strip().title() if fallback_city else "N/A"
+
 class GeocodingError(Exception):
     """Custom exception for Geocoding failures."""
     pass

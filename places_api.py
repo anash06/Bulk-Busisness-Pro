@@ -489,26 +489,6 @@ class PlacesAPI:
                             logger.info(f"Playwright Scraper: Extracted {len(feed_items_data)} items directly from feed DOM in 1 pass.")
                             parsed_places.extend(feed_items_data)
 
-                        # Quick detail enrichment for items missing phone/website (up to top 10 items)
-                        missing_details_items = [p for p in parsed_places if not p.get("phone_number") or not p.get("website")][:10]
-                        if missing_details_items:
-                            logger.info(f"Playwright Scraper: Enriching details for {len(missing_details_items)} items...")
-                            for idx, item in enumerate(missing_details_items):
-                                href = item.get("maps_url")
-                                if href and "google.com/maps" in href:
-                                    try:
-                                        page.goto(href, wait_until="domcontentloaded", timeout=4000)
-                                        details = self._extract_details_from_page(page, href)
-                                        if details.get("phone_number"):
-                                            item["phone_number"] = details["phone_number"]
-                                            item["international_phone_number"] = details["phone_number"]
-                                        if details.get("website"):
-                                            item["website"] = details["website"]
-                                        if details.get("full_address"):
-                                            item["full_address"] = details["full_address"]
-                                    except Exception:
-                                        continue
-
                 browser.close()
                 log_api_call("playwright_search", url, "200")
                 

@@ -126,15 +126,7 @@ def queue_poller_thread():
                     if (not place_id or place_id not in existing_ids) and (not b_name or b_name not in existing_names):
                         WEB_RESULTS.append(biz)
                         CURRENT_STATUS["found"] = len(WEB_RESULTS)
-        except queue.Empty:
-            pass
-        except Exception as e:
-            pass
             
-            elif status in ["finished", "stopped", "error"]:
-                CURRENT_STATUS["is_running"] = False
-                CURRENT_STATUS["status"] = "Ready" if status != "error" else "Error"
-                
             PROGRESS_QUEUE.task_done()
         except queue.Empty:
             pass

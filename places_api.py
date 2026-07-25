@@ -390,7 +390,7 @@ class PlacesAPI:
                         for idx, href in enumerate(target_urls):
                             try:
                                 logger.info(f"Playwright Scraper: Loading details ({idx+1}/{len(target_urls)}) -> {href}")
-                                page.goto(href, timeout=15000)
+                                page.goto(href, wait_until="domcontentloaded", timeout=10000)
                                 biz_info = self._extract_details_from_page(page, href)
                                 if biz_info and biz_info["name"] != "Unknown Business":
                                     parsed_places.append(biz_info)
@@ -410,7 +410,7 @@ class PlacesAPI:
     def _extract_details_from_page(self, page, place_url: str = "") -> Dict[str, Any]:
         """Scrapes text fields from detail panel elements."""
         # Allow panel animations to settle fast
-        page.wait_for_timeout(400)
+        page.wait_for_timeout(150)
         
         current_url = place_url or page.url
         latitude = 0.0

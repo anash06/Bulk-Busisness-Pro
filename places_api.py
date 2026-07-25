@@ -251,10 +251,19 @@ class PlacesAPI:
             
             with sync_playwright() as p:
                 headless_pref = AppSettings.get_headless()
-                # Launch Chromium (with Docker/cloud flags & stealth parameters)
-                browser = p.chromium.launch(
-                    headless=headless_pref,
-                    args=[
+                
+                # Auto-detect Chromium executable path in Linux / Docker environments
+                import glob
+                possible_execs = (
+                    glob.glob("/ms-playwright/chromium-*/chrome-linux/chrome") +
+                    glob.glob("/root/.cache/ms-playwright/chromium-*/chrome-linux/chrome") +
+                    glob.glob("/home/*/.cache/ms-playwright/chromium-*/chrome-linux/chrome") +
+                    glob.glob("/app/playwright-browsers/chromium-*/chrome-linux/chrome")
+                )
+                
+                launch_kwargs = {
+                    "headless": headless_pref,
+                    "args": [
                         "--disable-gpu",
                         "--no-sandbox",
                         "--disable-setuid-sandbox",
@@ -263,7 +272,19 @@ class PlacesAPI:
                         "--no-first-run",
                         "--no-service-autorun"
                     ]
-                )
+                }
+                
+                if possible_execs and os.path.exists(possible_execs[0]):
+                    logger.info(f"Playwright Scraper: Found Chromium binary at -> {possible_execs[0]}")
+                    launch_kwargs["executable_path"] = possible_execs[0]
+                
+                try:
+                    browser = p.chromium.launch(**launch_kwargs)
+                except Exception as le:
+                    logger.warning(f"Playwright custom path launch notice: {le}. Retrying standard launch...")
+                    if "executable_path" in launch_kwargs:
+                        del launch_kwargs["executable_path"]
+                    browser = p.chromium.launch(**launch_kwargs)
                 
                 context = browser.new_context(
                     user_agent=self.user_agents[0],

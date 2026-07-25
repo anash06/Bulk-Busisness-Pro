@@ -12,6 +12,7 @@ COPY requirements.txt .
 # Install dependencies matching Playwright 1.40.0
 RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium --with-deps
+RUN chmod -R 777 /ms-playwright
 
 # Copy application files
 COPY . .

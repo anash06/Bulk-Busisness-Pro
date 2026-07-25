@@ -68,7 +68,7 @@ def queue_poller_thread():
                         b_status = str(biz.get("business_status", "OPERATIONAL")).upper()
                         biz["status"] = "Active" if "CLOSED" not in b_status else ("Temporarily Closed" if "TEMPORARILY" in b_status else "Permanently Closed")
                     if "city" not in biz or not biz["city"]:
-                        biz["city"] = data.get("city", "")
+                        biz["city"] = data.get("city") or CURRENT_STATUS.get("city") or ""
 
                     existing_ids = {item.get("place_id") for item in WEB_RESULTS}
                     if biz.get("place_id") not in existing_ids:

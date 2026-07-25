@@ -343,7 +343,7 @@ class PlacesAPI:
                         feed = page.locator(feed_selector).first
                         last_height = feed.evaluate("el => el.scrollHeight")
                         scroll_attempts = 0
-                        max_scrolls = 100  # Allows fetching up to hundreds of items
+                        max_scrolls = 15  # Fast 15 scrolls for instant responsiveness
                         
                         while scroll_attempts < max_scrolls:
                             # Check if Google Maps displays the end of list message
@@ -360,12 +360,11 @@ class PlacesAPI:
                                 break
 
                             feed.evaluate("el => el.scrollTo(0, el.scrollHeight)")
-                            page.wait_for_timeout(1000)
+                            page.wait_for_timeout(300)
                             
                             new_height = feed.evaluate("el => el.scrollHeight")
                             if new_height == last_height:
-                                # Retry wait/scroll in case of slow loading
-                                page.wait_for_timeout(1000)
+                                page.wait_for_timeout(300)
                                 feed.evaluate("el => el.scrollTo(0, el.scrollHeight)")
                                 new_height2 = feed.evaluate("el => el.scrollHeight")
                                 if new_height2 == last_height:
@@ -386,11 +385,12 @@ class PlacesAPI:
                             if href and href not in place_urls:
                                 place_urls.append(href)
                         
-                        # Process all collected place URLs
-                        for idx, href in enumerate(place_urls):
+                        # Process up to top 25 collected place URLs for maximum speed
+                        target_urls = place_urls[:25]
+                        for idx, href in enumerate(target_urls):
                             try:
-                                logger.info(f"Playwright Scraper: Loading details ({idx+1}/{len(place_urls)}) -> {href}")
-                                page.goto(href)
+                                logger.info(f"Playwright Scraper: Loading details ({idx+1}/{len(target_urls)}) -> {href}")
+                                page.goto(href, timeout=15000)
                                 biz_info = self._extract_details_from_page(page, href)
                                 if biz_info and biz_info["name"] != "Unknown Business":
                                     parsed_places.append(biz_info)
@@ -409,8 +409,8 @@ class PlacesAPI:
 
     def _extract_details_from_page(self, page, place_url: str = "") -> Dict[str, Any]:
         """Scrapes text fields from detail panel elements."""
-        # Allow panel animations to settle
-        page.wait_for_timeout(1500)
+        # Allow panel animations to settle fast
+        page.wait_for_timeout(400)
         
         current_url = place_url or page.url
         latitude = 0.0

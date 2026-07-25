@@ -64,30 +64,36 @@ def queue_poller_thread():
     while True:
         try:
             data = PROGRESS_QUEUE.get(timeout=0.5)
-            status = data.get("status")
+            if not isinstance(data, dict):
+                continue
+                
+            status = data.get("status", "")
+            msg = data.get("message", "")
+            
+            # Update status text and active running state
+            CURRENT_STATUS["status"] = status.capitalize() if status else "Ready"
+            if msg:
+                CURRENT_STATUS["message"] = msg
 
-            if status == "search_started":
-                WEB_RESULTS.clear()
+            if status in ["started", "geocoding", "grid", "running", "details", "business_found"]:
                 CURRENT_STATUS["is_running"] = True
-                CURRENT_STATUS["status"] = "Searching"
-                CURRENT_STATUS["keyword"] = data.get("keyword", "")
-                CURRENT_STATUS["city"] = data.get("city", "")
-                CURRENT_STATUS["grid_processed"] = 0
-                CURRENT_STATUS["grid_total"] = data.get("grid_total", 1)
-                CURRENT_STATUS["found"] = 0
-                CURRENT_STATUS["progress"] = 0.0
+            elif status in ["finished", "stopped", "error"]:
+                CURRENT_STATUS["is_running"] = False
 
-            elif status == "progress_update":
-                CURRENT_STATUS["grid_processed"] = data.get("processed", CURRENT_STATUS["grid_processed"])
-                CURRENT_STATUS["grid_total"] = data.get("total", CURRENT_STATUS["grid_total"])
-                CURRENT_STATUS["found"] = data.get("found", CURRENT_STATUS["found"])
-                if CURRENT_STATUS["grid_total"] > 0:
-                    CURRENT_STATUS["progress"] = round((CURRENT_STATUS["grid_processed"] / CURRENT_STATUS["grid_total"]) * 100, 1)
+            if "grid_total" in data and data["grid_total"]:
+                CURRENT_STATUS["grid_total"] = data["grid_total"]
+            if "grid_processed" in data:
+                CURRENT_STATUS["grid_processed"] = data["grid_processed"]
+            if "found" in data:
+                CURRENT_STATUS["found"] = data["found"]
+            if "processed" in data and CURRENT_STATUS.get("grid_total", 0) > 0:
+                CURRENT_STATUS["progress"] = round((data["processed"] / CURRENT_STATUS["grid_total"]) * 100, 1)
 
-            elif status == "business_found":
+            # Process business_found records
+            if status == "business_found":
                 biz = data.get("data")
-                if biz:
-                    # Normalize Business Type (e.g. Software Company, Mobile Shop, Gym)
+                if biz and isinstance(biz, dict):
+                    # 1. Normalize Business Type (e.g. Software Company, Mobile Shop, Gym)
                     type_val = biz.get("type") or ""
                     if not type_val or type_val.lower() in ["general", "business", "n/a", "unknown"]:
                         b_types = biz.get("business_types", [])
@@ -101,12 +107,12 @@ def queue_poller_thread():
                             type_val = "Business"
                     biz["type"] = type_val.title()
 
-                    # Normalize Status
+                    # 2. Normalize Status
                     if "status" not in biz or not biz["status"]:
                         b_status = str(biz.get("business_status", "OPERATIONAL")).upper()
                         biz["status"] = "Active" if "CLOSED" not in b_status else ("Temporarily Closed" if "TEMPORARILY" in b_status else "Permanently Closed")
 
-                    # Extract City from full_address or fallback to searched city
+                    # 3. Extract City from full_address or fallback to searched city
                     searched_city = data.get("city") or CURRENT_STATUS.get("city") or ""
                     biz_city = biz.get("city") or ""
                     if not biz_city or biz_city.lower() in ["n/a", "unknown", ""]:
@@ -114,8 +120,16 @@ def queue_poller_thread():
                     biz["city"] = biz_city.strip().title() if biz_city else "N/A"
 
                     existing_ids = {item.get("place_id") for item in WEB_RESULTS}
-                    if biz.get("place_id") not in existing_ids:
+                    existing_names = {item.get("name") for item in WEB_RESULTS}
+                    place_id = biz.get("place_id")
+                    b_name = biz.get("name")
+                    if (not place_id or place_id not in existing_ids) and (not b_name or b_name not in existing_names):
                         WEB_RESULTS.append(biz)
+                        CURRENT_STATUS["found"] = len(WEB_RESULTS)
+        except queue.Empty:
+            pass
+        except Exception as e:
+            pass
             
             elif status in ["finished", "stopped", "error"]:
                 CURRENT_STATUS["is_running"] = False

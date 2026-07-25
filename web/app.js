@@ -287,7 +287,7 @@ function startStatusPolling() {
                     document.getElementById('btn-stop-search').classList.remove('hidden');
                     document.getElementById('progress-card').classList.remove('hidden');
 
-                    const pct = Math.min(100, Math.round((data.progress || 0) * 100));
+                    const pct = Math.min(100, Math.round(data.progress || 0));
                     document.getElementById('progress-fill').style.width = pct + '%';
                     document.getElementById('progress-status-txt').innerText = `Status: ${data.message || 'Searching...'}`;
                     document.getElementById('progress-stats-txt').innerText = `Grid: ${data.grid_processed || 0}/${data.grid_total || 0} | Found: ${data.found || 0}`;
@@ -300,9 +300,7 @@ function startStatusPolling() {
                         document.getElementById('btn-stop-search').classList.add('hidden');
                         showToast('Search completed!');
                     }
-                    if (data.found > 0 || rawData.length > 0) {
-                        fetchResults();
-                    }
+                    fetchResults();
                 }
             }
         } catch (e) {

@@ -161,6 +161,18 @@ class Geocoder:
                 data = _do_request({})
                 result = _pick_best(data) if data else None
 
+            # Third attempt (fallback): append ', India' for single-word locations
+            if not result and "," not in address_str:
+                logger.debug(f"Unrestricted search returned nothing for '{address_str}', trying with country context...")
+                try:
+                    params_fallback = {"q": f"{address_str}, India", "format": "json", "addressdetails": 1, "limit": 5}
+                    resp_fallback = requests.get(NOMINATIM_GEOCODE_URL, params=params_fallback, headers=headers, timeout=5)
+                    if resp_fallback.status_code == 200:
+                        data_fb = resp_fallback.json()
+                        result = _pick_best(data_fb) if data_fb else None
+                except Exception:
+                    pass
+
             if not result:
                 logger.warning(f"Nominatim returned no results for '{address_str}'")
                 raise GeocodingError(f"Could not locate '{address_str}' on OpenStreetMap.")

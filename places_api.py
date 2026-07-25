@@ -374,29 +374,129 @@ class PlacesAPI:
                                 last_height = new_height
                             scroll_attempts += 1
                         
-                        # Find place links matching '/maps/place/' inside the feed container
-                        links_loc = page.locator('a[href*="/maps/place/"]')
-                        links_count = links_loc.count()
-                        logger.info(f"Playwright Scraper: Collected {links_count} listing links.")
-                        
-                        place_urls = []
-                        for i in range(links_count):
-                            href = links_loc.nth(i).get_attribute('href')
-                            if href and href not in place_urls:
-                                place_urls.append(href)
-                        
-                        # Process up to top 25 collected place URLs for maximum speed
-                        target_urls = place_urls[:25]
-                        for idx, href in enumerate(target_urls):
-                            try:
-                                logger.info(f"Playwright Scraper: Loading details ({idx+1}/{len(target_urls)}) -> {href}")
-                                page.goto(href, wait_until="domcontentloaded", timeout=10000)
-                                biz_info = self._extract_details_from_page(page, href)
-                                if biz_info and biz_info["name"] != "Unknown Business":
-                                    parsed_places.append(biz_info)
-                            except Exception as ex:
-                                logger.error(f"Error scraping detail page {href}: {ex}")
-                                continue
+                        # Extract all listings directly from the sidebar feed DOM in 1 fast pass (2 seconds)
+                        feed_items_data = page.evaluate("""() => {
+                            const items = [];
+                            const cards = document.querySelectorAll('div.Nv2pk, div[role="article"], a[href*="/maps/place/"]');
+                            const seenNames = new Set();
+                            
+                            cards.forEach((card, idx) => {
+                                try {
+                                    let linkEl = card.tagName === 'A' ? card : card.querySelector('a[href*="/maps/place/"]');
+                                    let href = linkEl ? linkEl.getAttribute('href') : '';
+                                    
+                                    let name = '';
+                                    if (linkEl && linkEl.getAttribute('aria-label')) {
+                                        name = linkEl.getAttribute('aria-label').trim();
+                                    }
+                                    if (!name && card.querySelector('div.fontHeadlineSmall')) {
+                                        name = card.querySelector('div.fontHeadlineSmall').textContent.trim();
+                                    }
+                                    if (!name && linkEl) {
+                                        name = linkEl.textContent.trim();
+                                    }
+                                    
+                                    if (!name || name === 'Directions' || name === 'Website' || name === 'Reviews' || seenNames.has(name)) return;
+                                    seenNames.add(name);
+
+                                    let cardText = card.textContent || '';
+                                    
+                                    // Extract Rating & Reviews
+                                    let rating = 0.0;
+                                    let reviews = 0;
+                                    let ratingEl = card.querySelector('span.MW4etd, div.F7nice');
+                                    if (ratingEl) {
+                                        let rText = ratingEl.textContent.trim();
+                                        let m = rText.match(/([1-5]\\.\\d)/);
+                                        if (m) rating = parseFloat(m[1]);
+                                    }
+                                    let revEl = card.querySelector('span.UY7F9');
+                                    if (revEl) {
+                                        let rvText = revEl.textContent.replace(/[^0-9]/g, '');
+                                        if (rvText) reviews = parseInt(rvText);
+                                    }
+
+                                    // Extract phone number from card text
+                                    let phone = '';
+                                    let phoneMatch = cardText.match(/(\\+?\\d{1,4}[-.\\s]?\\(?\\d{2,4}\\)?[-.\\s]?\\d{3,4}[-.\\s]?\\d{3,4})/);
+                                    if (phoneMatch && phoneMatch[1].length >= 8 && !phoneMatch[1].includes('0000')) {
+                                        phone = phoneMatch[1].trim();
+                                    }
+
+                                    // Extract website link
+                                    let web = '';
+                                    let webEl = card.querySelector('a[href*="http"]:not([href*="google.com"])');
+                                    if (webEl) web = webEl.getAttribute('href');
+
+                                    // Coordinates from URL
+                                    let lat = 0.0, lng = 0.0;
+                                    if (href) {
+                                        let coordMatch = href.match(/!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)/);
+                                        if (coordMatch) {
+                                            lat = parseFloat(coordMatch[1]);
+                                            lng = parseFloat(coordMatch[2]);
+                                        }
+                                    }
+
+                                    // Hash place_id
+                                    let hashVal = 0;
+                                    let strToHash = name + (href || idx);
+                                    for (let i = 0; i < strToHash.length; i++) {
+                                        hashVal = ((hashVal << 5) - hashVal) + strToHash.charCodeAt(i);
+                                        hashVal |= 0;
+                                    }
+
+                                    items.push({
+                                        place_id: 'scrape_' + Math.abs(hashVal),
+                                        name: name,
+                                        full_address: cardText.slice(0, 120),
+                                        city: '',
+                                        state: '',
+                                        country: 'India',
+                                        postal_code: '',
+                                        latitude: lat,
+                                        longitude: lng,
+                                        phone_number: phone,
+                                        international_phone_number: phone,
+                                        website: web,
+                                        maps_url: href ? (href.startsWith('http') ? href : ('https://www.google.com' + href)) : page.url,
+                                        rating: rating,
+                                        total_reviews: reviews,
+                                        business_status: 'OPERATIONAL',
+                                        business_types: ['Business']
+                                    });
+                                } catch(e) {}
+                            });
+                            return items;
+                        }""")
+
+                        if feed_items_data and isinstance(feed_items_data, list):
+                            logger.info(f"Playwright Scraper: Extracted {len(feed_items_data)} items directly from feed DOM in 1 pass.")
+                            parsed_places.extend(feed_items_data)
+
+                        # If 1-pass extraction yielded fewer than 5 items, fallback to fast detail loads for top 5
+                        if len(parsed_places) < 5:
+                            links_loc = page.locator('a[href*="/maps/place/"]')
+                            links_count = links_loc.count()
+                            place_urls = []
+                            for i in range(links_count):
+                                href = links_loc.nth(i).get_attribute('href')
+                                if href and href not in place_urls:
+                                    place_urls.append(href)
+
+                            target_urls = place_urls[:8]
+                            for idx, href in enumerate(target_urls):
+                                try:
+                                    logger.info(f"Playwright Scraper: Fallback detail load ({idx+1}/{len(target_urls)}) -> {href}")
+                                    page.goto(href, wait_until="domcontentloaded", timeout=6000)
+                                    biz_info = self._extract_details_from_page(page, href)
+                                    if biz_info and biz_info["name"] != "Unknown Business":
+                                        # Deduplicate by name
+                                        if not any(p.get("name") == biz_info["name"] for p in parsed_places):
+                                            parsed_places.append(biz_info)
+                                except Exception as ex:
+                                    logger.error(f"Error scraping detail page {href}: {ex}")
+                                    continue
 
                 browser.close()
                 log_api_call("playwright_search", url, "200")

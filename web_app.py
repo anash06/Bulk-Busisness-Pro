@@ -28,6 +28,36 @@ SEARCH_ENGINE = SearchEngine(PROGRESS_QUEUE)
 WEB_RESULTS = []
 CURRENT_STATUS = {"status": "Ready", "message": "Engine initialized", "is_running": False, "grid_processed": 0, "grid_total": 0, "found": 0, "progress": 0.0}
 
+INDIAN_STATES = {
+    "tamil nadu", "kerala", "karnataka", "andhra pradesh", "telangana", "maharashtra",
+    "gujarat", "rajasthan", "punjab", "haryana", "uttar pradesh", "bihar", "west bengal",
+    "madhya pradesh", "goa", "delhi", "assam", "odisha", "jharkhand", "chhattisgarh",
+    "uttarakhand", "himachal pradesh", "jammu and kashmir", "ladakh", "puducherry"
+}
+
+def extract_city_from_address(full_address: str, fallback_city: str = "") -> str:
+    """Extracts clean city name directly from full address string."""
+    if not full_address:
+        return fallback_city.strip().title() if fallback_city else "N/A"
+    
+    cleaned = re.sub(r'\b(india|usa|united states|uk)\b', '', full_address, flags=re.IGNORECASE).strip()
+    parts = [p.strip() for p in cleaned.split(",") if p.strip()]
+    
+    if not parts:
+        return fallback_city.strip().title() if fallback_city else "N/A"
+
+    for i in range(len(parts) - 1, -1, -1):
+        part = parts[i]
+        clean_part = re.sub(r'\b\d{5,6}\b', '', part).strip()
+        clean_lower = clean_part.lower()
+
+        if not clean_part or clean_lower in INDIAN_STATES:
+            continue
+
+        return clean_part.title()
+
+    return fallback_city.strip().title() if fallback_city else "N/A"
+
 def queue_poller_thread():
     """Background thread polling progress queue from SearchEngine."""
     global WEB_RESULTS, CURRENT_STATUS
@@ -35,29 +65,26 @@ def queue_poller_thread():
         try:
             data = PROGRESS_QUEUE.get(timeout=0.5)
             status = data.get("status")
-            msg = data.get("message", "")
-            
-            CURRENT_STATUS["status"] = status.capitalize() if status else "Ready"
-            CURRENT_STATUS["message"] = msg
-            
-            if status in ["started", "geocoding", "grid", "running", "details", "business_found"]:
-                CURRENT_STATUS["is_running"] = True
-            
-            grid_total = data.get("grid_total", 0)
-            grid_proc = data.get("grid_processed", 0)
-            found = data.get("found", 0)
-            proc = data.get("processed", 0)
-            
-            CURRENT_STATUS["grid_total"] = grid_total
-            CURRENT_STATUS["grid_processed"] = grid_proc
-            CURRENT_STATUS["found"] = found
-            
-            if status == "details" and found > 0:
-                CURRENT_STATUS["progress"] = proc / found
-            elif grid_total > 0:
-                CURRENT_STATUS["progress"] = grid_proc / grid_total
 
-            if status == "business_found":
+            if status == "search_started":
+                WEB_RESULTS.clear()
+                CURRENT_STATUS["is_running"] = True
+                CURRENT_STATUS["status"] = "Searching"
+                CURRENT_STATUS["keyword"] = data.get("keyword", "")
+                CURRENT_STATUS["city"] = data.get("city", "")
+                CURRENT_STATUS["grid_processed"] = 0
+                CURRENT_STATUS["grid_total"] = data.get("grid_total", 1)
+                CURRENT_STATUS["found"] = 0
+                CURRENT_STATUS["progress"] = 0.0
+
+            elif status == "progress_update":
+                CURRENT_STATUS["grid_processed"] = data.get("processed", CURRENT_STATUS["grid_processed"])
+                CURRENT_STATUS["grid_total"] = data.get("total", CURRENT_STATUS["grid_total"])
+                CURRENT_STATUS["found"] = data.get("found", CURRENT_STATUS["found"])
+                if CURRENT_STATUS["grid_total"] > 0:
+                    CURRENT_STATUS["progress"] = round((CURRENT_STATUS["grid_processed"] / CURRENT_STATUS["grid_total"]) * 100, 1)
+
+            elif status == "business_found":
                 biz = data.get("data")
                 if biz:
                     # Normalize Business Type (e.g. Software Company, Mobile Shop, Gym)
@@ -79,12 +106,12 @@ def queue_poller_thread():
                         b_status = str(biz.get("business_status", "OPERATIONAL")).upper()
                         biz["status"] = "Active" if "CLOSED" not in b_status else ("Temporarily Closed" if "TEMPORARILY" in b_status else "Permanently Closed")
 
-                    # Dynamic City Assignment according to searched city
+                    # Extract City from full_address or fallback to searched city
                     searched_city = data.get("city") or CURRENT_STATUS.get("city") or ""
-                    city_val = biz.get("city") or ""
-                    if not city_val or city_val.lower() in ["n/a", "unknown", ""]:
-                        city_val = searched_city
-                    biz["city"] = city_val.strip().title() if city_val else "Unknown City"
+                    biz_city = biz.get("city") or ""
+                    if not biz_city or biz_city.lower() in ["n/a", "unknown", ""]:
+                        biz_city = extract_city_from_address(biz.get("full_address", ""), fallback_city=searched_city)
+                    biz["city"] = biz_city.strip().title() if biz_city else "N/A"
 
                     existing_ids = {item.get("place_id") for item in WEB_RESULTS}
                     if biz.get("place_id") not in existing_ids:

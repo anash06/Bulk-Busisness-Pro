@@ -151,7 +151,7 @@ function renderTable() {
     if (!tbody) return;
 
     if (pageRows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="empty-state">No business records match criteria.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-state">No business records match criteria.</td></tr>';
     } else {
         tbody.innerHTML = pageRows.map((biz, idx) => {
             const rowNum = startIdx + idx + 1;
@@ -159,7 +159,8 @@ function renderTable() {
             const phone = biz.phone_number ? `<a href="tel:${escapeHtml(biz.phone_number)}">${escapeHtml(biz.phone_number)}</a>` : '<span class="text-muted">N/A</span>';
             const webUrl = biz.website ? (biz.website.startsWith('http') ? biz.website : 'https://' + biz.website) : '';
             const web = webUrl ? `<a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener">Website ↗</a>` : '<span class="text-muted">N/A</span>';
-            
+            const mapLink = biz.maps_url ? `<a href="${escapeHtml(biz.maps_url)}" target="_blank" rel="noopener" class="map-link">Map 🗺️</a>` : '<span class="text-muted">N/A</span>';
+
             let openingTime = 'N/A';
             if (biz.opening_hours) {
                 if (typeof biz.opening_hours === 'string') {
@@ -189,6 +190,7 @@ function renderTable() {
                     <td>${escapeHtml(biz.city || 'N/A')}</td>
                     <td title="${escapeHtml(biz.full_address || '')}">${escapeHtml(biz.full_address || 'N/A')}</td>
                     <td>${escapeHtml(openingTime)}</td>
+                    <td>${mapLink}</td>
                 </tr>
             `;
         }).join('');
@@ -319,7 +321,7 @@ function exportData(format) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     
     if (format === 'csv') {
-        const headers = ["S.No", "Business Name", "Type", "Status", "Phone", "Website", "Rating", "Reviews", "City", "Full Address", "Opening Time"];
+        const headers = ["S.No", "Business Name", "Type", "Status", "Phone", "Website", "Rating", "Reviews", "City", "Full Address", "Opening Time", "Map URL"];
         const rows = filteredData.map((b, idx) => {
             let openTxt = 'N/A';
             if (b.opening_hours) {
@@ -341,7 +343,8 @@ function exportData(format) {
                 b.total_reviews || 0,
                 `"${(b.city || '').replace(/"/g, '""')}"`,
                 `"${(b.full_address || '').replace(/"/g, '""')}"`,
-                `"${openTxt.replace(/"/g, '""')}"`
+                `"${openTxt.replace(/"/g, '""')}"`,
+                `"${(b.maps_url || '').replace(/"/g, '""')}"`
             ];
         });
 

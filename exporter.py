@@ -54,7 +54,8 @@ class Exporter:
                 "total_reviews": "Reviews",
                 "city": "City",
                 "full_address": "Full Address",
-                "opening_hours": "Opening Time"
+                "opening_hours": "Opening Time",
+                "maps_url": "Map URL"
             }
             
             # Select columns that exist in the dataframe

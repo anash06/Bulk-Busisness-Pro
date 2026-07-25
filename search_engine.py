@@ -234,29 +234,14 @@ class SearchEngine:
                 except Exception:
                     auto_radius = 20000  # fallback 20 km
 
-            # 3. Divide boundary viewport into a grid
+            # 3. Use geocoded city center for Playwright scraper URL centering
             grid_points = []
-            if not AppSettings.get_api_key():
-                # In Scraper mode, use geocoded city center for URL centering
-                # Google Maps will return geographically-relevant results when centered
-                if not geocode_failed and center_lat != 0.0 and center_lng != 0.0:
-                    logger.info(f"Scraper Mode: using geocoded center ({center_lat}, {center_lng}) for '{city}'")
-                    grid_points = [(center_lat, center_lng)]
-                else:
-                    logger.info(f"Scraper Mode: geocode failed, using text-only search for '{city}'")
-                    grid_points = [(0.0, 0.0)]
+            if not geocode_failed and center_lat != 0.0 and center_lng != 0.0:
+                logger.info(f"Playwright Scraper Mode: using geocoded center ({center_lat}, {center_lng}) for '{city}'")
+                grid_points = [(center_lat, center_lng)]
             else:
-                if viewport and not geocode_failed:
-                    grid_points = self._generate_grid(viewport, auto_radius if auto_radius > 0 else 10000)
-                
-                if not grid_points:
-                    if geocode_failed:
-                        logger.info(f"Using text search fallback for '{city}'")
-                        grid_points = [(0.0, 0.0)]
-                    else:
-                        # Bounding box not available, use center point only
-                        logger.info(f"Bounding box not available for {city}. Using center point only.")
-                        grid_points = [(center_lat, center_lng)]
+                logger.info(f"Playwright Scraper Mode: geocode failed, using text-only search for '{city}'")
+                grid_points = [(0.0, 0.0)]
 
             self.total_grid_points = len(grid_points)
             self.processed_grid_points = 0
@@ -363,12 +348,8 @@ class SearchEngine:
                     )
 
                     try:
-                        # If in scraper mode, details are already scraped and stored in scraped_places_map
-                        if not AppSettings.get_api_key():
-                            biz_info = scraped_places_map.get(place_id)
-                        else:
-                            # If not cached, query Google Places Details API
-                            biz_info = self.places_api.get_place_details(place_id)
+                        # Retrieve details from scraped_places_map
+                        biz_info = scraped_places_map.get(place_id)
                             
                         if biz_info:
                             biz_name = biz_info.get("name", "")

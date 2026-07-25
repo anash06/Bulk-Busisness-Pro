@@ -72,17 +72,11 @@ class PlacesAPI:
 
     def nearby_search(self, latitude: float, longitude: float, radius: int, keyword: str = "", page_token: str = "") -> Tuple[List[Dict[str, Any]], str]:
         """
-        Main Nearby Search router.
-        If an API Key is set, it calls the Google API.
-        If NO API Key is set, it runs the keyless web scraper.
+        Main Nearby Search router using Playwright Web Scraper.
         """
-        api_key = AppSettings.get_api_key()
-        if api_key:
-            return self._nearby_search_api(latitude, longitude, radius, keyword, page_token)
-        else:
-            if page_token:
-                return [], ""
-            return self._nearby_search_scraper(latitude, longitude, radius, keyword)
+        if page_token:
+            return [], ""
+        return self._nearby_search_scraper(latitude, longitude, radius, keyword)
 
     def get_place_details(self, place_id: str) -> Dict[str, Any]:
         """

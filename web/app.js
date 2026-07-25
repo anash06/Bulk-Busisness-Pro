@@ -272,12 +272,16 @@ function startStatusPolling() {
                     document.getElementById('progress-stats-txt').innerText = `Grid: ${data.grid_processed || 0}/${data.grid_total || 0} | Found: ${data.found || 0}`;
 
                     fetchResults();
-                } else if (isSearching) {
-                    isSearching = false;
-                    document.getElementById('btn-start-search').classList.remove('hidden');
-                    document.getElementById('btn-stop-search').classList.add('hidden');
-                    showToast('Search completed!');
-                    fetchResults();
+                } else {
+                    if (isSearching) {
+                        isSearching = false;
+                        document.getElementById('btn-start-search').classList.remove('hidden');
+                        document.getElementById('btn-stop-search').classList.add('hidden');
+                        showToast('Search completed!');
+                    }
+                    if (data.found > 0 || rawData.length > 0) {
+                        fetchResults();
+                    }
                 }
             }
         } catch (e) {

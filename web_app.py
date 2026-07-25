@@ -40,7 +40,7 @@ def queue_poller_thread():
             CURRENT_STATUS["status"] = status.capitalize() if status else "Ready"
             CURRENT_STATUS["message"] = msg
             
-            if status in ["geocoding", "grid", "details"]:
+            if status in ["started", "geocoding", "grid", "running", "details", "business_found"]:
                 CURRENT_STATUS["is_running"] = True
             
             grid_total = data.get("grid_total", 0)

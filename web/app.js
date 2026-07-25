@@ -151,7 +151,7 @@ function renderTable() {
     if (!tbody) return;
 
     if (pageRows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No business records match criteria.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-state">No business records match criteria.</td></tr>';
     } else {
         tbody.innerHTML = pageRows.map((biz, idx) => {
             const rowNum = startIdx + idx + 1;
@@ -160,17 +160,35 @@ function renderTable() {
             const webUrl = biz.website ? (biz.website.startsWith('http') ? biz.website : 'https://' + biz.website) : '';
             const web = webUrl ? `<a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener">Website ↗</a>` : '<span class="text-muted">N/A</span>';
             
+            let openingTime = 'N/A';
+            if (biz.opening_hours) {
+                if (typeof biz.opening_hours === 'string') {
+                    openingTime = biz.opening_hours;
+                } else if (typeof biz.opening_hours === 'object') {
+                    if (biz.opening_hours.weekday_text && biz.opening_hours.weekday_text.length) {
+                        openingTime = biz.opening_hours.weekday_text.join(', ');
+                    } else if (biz.opening_hours.open_now !== undefined) {
+                        openingTime = biz.opening_hours.open_now ? 'Open Now' : 'Closed';
+                    }
+                }
+            }
+            if (openingTime === 'N/A' && biz.status) {
+                openingTime = (biz.status.toLowerCase().includes('closed')) ? 'Closed' : 'Open Now';
+            }
+
             return `
                 <tr>
                     <td>${rowNum}</td>
                     <td><strong>${escapeHtml(biz.name || 'Unknown')}</strong></td>
-                    <td>${escapeHtml(biz.type || 'General')}</td>
+                    <td>${escapeHtml(biz.type || 'Business')}</td>
                     <td><span class="status-badge">${escapeHtml(biz.status || 'Active')}</span></td>
                     <td>${phone}</td>
                     <td>${web}</td>
                     <td>${rating}</td>
                     <td>${biz.total_reviews || 0}</td>
                     <td>${escapeHtml(biz.city || 'N/A')}</td>
+                    <td title="${escapeHtml(biz.full_address || '')}">${escapeHtml(biz.full_address || 'N/A')}</td>
+                    <td>${escapeHtml(openingTime)}</td>
                 </tr>
             `;
         }).join('');
@@ -301,23 +319,31 @@ function exportData(format) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     
     if (format === 'csv') {
-        const headers = ["S.No", "Business Name", "Type", "Status", "Phone", "Website", "Rating", "Reviews", "Address", "City", "State", "Country", "Latitude", "Longitude"];
-        const rows = filteredData.map((b, idx) => [
-            idx + 1,
-            `"${(b.name || '').replace(/"/g, '""')}"`,
-            `"${(b.type || '').replace(/"/g, '""')}"`,
-            `"${(b.status || 'Active').replace(/"/g, '""')}"`,
-            `"${(b.phone_number || '').replace(/"/g, '""')}"`,
-            `"${(b.website || '').replace(/"/g, '""')}"`,
-            b.rating || 0.0,
-            b.total_reviews || 0,
-            `"${(b.full_address || '').replace(/"/g, '""')}"`,
-            `"${(b.city || '').replace(/"/g, '""')}"`,
-            `"${(b.state || '').replace(/"/g, '""')}"`,
-            `"${(b.country || '').replace(/"/g, '""')}"`,
-            b.latitude || 0.0,
-            b.longitude || 0.0
-        ]);
+        const headers = ["S.No", "Business Name", "Type", "Status", "Phone", "Website", "Rating", "Reviews", "City", "Full Address", "Opening Time"];
+        const rows = filteredData.map((b, idx) => {
+            let openTxt = 'N/A';
+            if (b.opening_hours) {
+                if (typeof b.opening_hours === 'string') openTxt = b.opening_hours;
+                else if (typeof b.opening_hours === 'object' && b.opening_hours.weekday_text) openTxt = b.opening_hours.weekday_text.join('; ');
+            }
+            if (openTxt === 'N/A' && b.status) {
+                openTxt = (b.status.toLowerCase().includes('closed')) ? 'Closed' : 'Open Now';
+            }
+
+            return [
+                idx + 1,
+                `"${(b.name || '').replace(/"/g, '""')}"`,
+                `"${(b.type || '').replace(/"/g, '""')}"`,
+                `"${(b.status || 'Active').replace(/"/g, '""')}"`,
+                `"${(b.phone_number || '').replace(/"/g, '""')}"`,
+                `"${(b.website || '').replace(/"/g, '""')}"`,
+                b.rating || 0.0,
+                b.total_reviews || 0,
+                `"${(b.city || '').replace(/"/g, '""')}"`,
+                `"${(b.full_address || '').replace(/"/g, '""')}"`,
+                `"${openTxt.replace(/"/g, '""')}"`
+            ];
+        });
 
         const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

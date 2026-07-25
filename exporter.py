@@ -43,30 +43,18 @@ class Exporter:
                     lambda x: "Wheelchair Accessible" if isinstance(x, dict) and x.get("wheelchair_accessible_entrance") else "Unknown"
                 )
 
-            # Re-order/rename column headers for a clean look
+            # Re-order/rename column headers for requested format
             headers_mapping = {
                 "name": "Business Name",
-                "place_id": "Google Place ID",
-                "full_address": "Full Address",
-                "city": "City",
-                "state": "State",
-                "country": "Country",
-                "postal_code": "Postal Code",
-                "latitude": "Latitude",
-                "longitude": "Longitude",
-                "phone_number": "Phone Number",
-                "international_phone_number": "International Phone Number",
+                "type": "Type",
+                "status": "Status",
+                "phone_number": "Phone",
                 "website": "Website",
-                "maps_url": "Google Maps URL",
                 "rating": "Rating",
-                "total_reviews": "Total Reviews",
-                "business_status": "Business Status",
-                "opening_hours": "Opening Hours",
-                "business_types": "Business Types",
-                "price_level": "Price Level",
-                "plus_code": "Plus Code",
-                "accessibility": "Accessibility Information",
-                "created_at": "Date Collected"
+                "total_reviews": "Reviews",
+                "city": "City",
+                "full_address": "Full Address",
+                "opening_hours": "Opening Time"
             }
             
             # Select columns that exist in the dataframe

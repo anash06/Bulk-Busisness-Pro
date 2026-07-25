@@ -169,7 +169,7 @@ function renderTable() {
                     <td>${web}</td>
                     <td>${rating}</td>
                     <td>${biz.total_reviews || 0}</td>
-                    <td>${escapeHtml(biz.city || '')}</td>
+                    <td>${escapeHtml(biz.city || biz.state || biz.full_address || 'N/A')}</td>
                 </tr>
             `;
         }).join('');

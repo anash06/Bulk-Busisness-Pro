@@ -257,10 +257,18 @@ class PlacesAPI:
             
             with sync_playwright() as p:
                 headless_pref = AppSettings.get_headless()
-                # Launch Chromium (rotated user agents to bypass blocks)
+                # Launch Chromium (with Docker/cloud flags & stealth parameters)
                 browser = p.chromium.launch(
                     headless=headless_pref,
-                    args=["--disable-gpu", "--no-sandbox"]
+                    args=[
+                        "--disable-gpu",
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-blink-features=AutomationControlled",
+                        "--no-first-run",
+                        "--no-service-autorun"
+                    ]
                 )
                 
                 context = browser.new_context(
@@ -268,11 +276,11 @@ class PlacesAPI:
                     viewport={"width": 1280, "height": 800}
                 )
                 page = context.new_page()
-                page.goto(url)
+                page.goto(url, timeout=30000)
                 
                 # Bypassing Cookie Consent wall if visible
                 try:
-                    consent_btn = page.locator('form[action*="consent"] button, button[aria-label="Accept all"], button[aria-label="Agree"]').first
+                    consent_btn = page.locator('form[action*="consent"] button, button[aria-label*="Accept"], button[aria-label*="Agree"], button[aria-label*="Reject"]').first
                     if consent_btn.count() > 0:
                         logger.info("Playwright Scraper: Agreeing to cookies consent.")
                         consent_btn.click()
@@ -281,7 +289,6 @@ class PlacesAPI:
                     pass
 
                 # Check if search redirected directly to a single business detail view
-                # Google Maps URLs for single details contain '/maps/place/'
                 if "/maps/place/" in page.url:
                     logger.info("Playwright Scraper: Direct redirect to a single place page.")
                     biz_info = self._extract_details_from_page(page, page.url)
@@ -289,18 +296,36 @@ class PlacesAPI:
                         parsed_places.append(biz_info)
                         
                 else:
-                    # Multi-listings results pane feed container role="feed"
-                    feed_selector = 'div[role="feed"]'
+                    # Multi-listings results pane feed container
+                    feed_selectors = [
+                        'div[role="feed"]',
+                        'div[aria-label*="Results for"]',
+                        'div.m6QE3c[tabindex="-1"]',
+                        'div.m6QE3c'
+                    ]
+                    feed_selector = None
                     feed_found = False
-                    try:
-                        page.wait_for_selector(feed_selector, timeout=8000)
-                        feed_found = True
-                    except Exception:
-                        logger.warning("Feed selector 'div[role=feed]' not found. Bot check or no results?")
+                    for selector in feed_selectors:
+                        try:
+                            if page.locator(selector).first.count() > 0:
+                                feed_selector = selector
+                                feed_found = True
+                                break
+                        except Exception:
+                            continue
 
-                    if feed_found:
-                        # Scroll container to fetch all items until the bottom is reached
-                        feed = page.locator(feed_selector)
+                    if not feed_found:
+                        try:
+                            page.wait_for_selector('div[role="feed"]', timeout=6000)
+                            feed_selector = 'div[role="feed"]'
+                            feed_found = True
+                        except Exception:
+                            logger.warning("Feed selector not found. Retrying link extraction from page body...")
+                            feed_selector = 'body'
+                            feed_found = True
+
+                    if feed_found and feed_selector:
+                        feed = page.locator(feed_selector).first
                         last_height = feed.evaluate("el => el.scrollHeight")
                         scroll_attempts = 0
                         max_scrolls = 100  # Allows fetching up to hundreds of items

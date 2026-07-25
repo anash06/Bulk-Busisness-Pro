@@ -119,11 +119,15 @@ def queue_poller_thread():
                         biz_city = extract_city_from_address(biz.get("full_address", ""), fallback_city=searched_city)
                     biz["city"] = biz_city.strip().title() if biz_city else "N/A"
 
-                    existing_ids = {item.get("place_id") for item in WEB_RESULTS}
-                    existing_names = {item.get("name") for item in WEB_RESULTS}
+                    existing_ids = {item.get("place_id") for item in WEB_RESULTS if item.get("place_id")}
+                    existing_names = {item.get("name").strip().lower() for item in WEB_RESULTS if item.get("name")}
                     place_id = biz.get("place_id")
-                    b_name = biz.get("name")
-                    if (not place_id or place_id not in existing_ids) and (not b_name or b_name not in existing_names):
+                    b_name = (biz.get("name") or "").strip().lower()
+
+                    if place_id and place_id not in existing_ids:
+                        WEB_RESULTS.append(biz)
+                        CURRENT_STATUS["found"] = len(WEB_RESULTS)
+                    elif not place_id and b_name and b_name not in existing_names:
                         WEB_RESULTS.append(biz)
                         CURRENT_STATUS["found"] = len(WEB_RESULTS)
             

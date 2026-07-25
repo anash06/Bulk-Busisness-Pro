@@ -234,6 +234,18 @@ async function handleStartSearch(e) {
         return;
     }
 
+    // Reset table search/filter controls so all new incoming records display automatically
+    if (document.getElementById('table-filter-search')) document.getElementById('table-filter-search').value = '';
+    if (document.getElementById('filter-location')) document.getElementById('filter-location').value = '';
+    if (document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
+    if (document.getElementById('filter-has-phone')) document.getElementById('filter-has-phone').checked = false;
+    if (document.getElementById('filter-has-website')) document.getElementById('filter-has-website').checked = false;
+
+    rawData = [];
+    filteredData = [];
+    currentPage = 1;
+    renderTable();
+
     try {
         const res = await fetch('/api/search/start', {
             method: 'POST',

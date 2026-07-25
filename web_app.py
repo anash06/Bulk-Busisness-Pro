@@ -79,11 +79,12 @@ def queue_poller_thread():
                         b_status = str(biz.get("business_status", "OPERATIONAL")).upper()
                         biz["status"] = "Active" if "CLOSED" not in b_status else ("Temporarily Closed" if "TEMPORARILY" in b_status else "Permanently Closed")
 
-                    # Normalize City (e.g. Kayalpatnam, Chennai)
+                    # Dynamic City Assignment according to searched city
+                    searched_city = data.get("city") or CURRENT_STATUS.get("city") or ""
                     city_val = biz.get("city") or ""
                     if not city_val or city_val.lower() in ["n/a", "unknown", ""]:
-                        city_val = data.get("city") or CURRENT_STATUS.get("city") or ""
-                    biz["city"] = city_val.title() if city_val else "Kayalpatnam"
+                        city_val = searched_city
+                    biz["city"] = city_val.strip().title() if city_val else "Unknown City"
 
                     existing_ids = {item.get("place_id") for item in WEB_RESULTS}
                     if biz.get("place_id") not in existing_ids:

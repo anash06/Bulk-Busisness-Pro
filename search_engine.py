@@ -367,7 +367,9 @@ class SearchEngine:
 
                             self.progress_queue.put({
                                 "status": "business_found",
-                                "data": biz_info
+                                "data": biz_info,
+                                "city": self.current_city,
+                                "keyword": self.current_keyword
                             })
                             
                     except PlacesAPIError as pe:

@@ -423,6 +423,21 @@ class PlacesAPI:
                                         phone = phoneMatch[1].trim();
                                     }
 
+                                    // Extract business category text from card
+                                    let catText = '';
+                                    let w4Nodes = card.querySelectorAll('div.W4Efsd, span');
+                                    w4Nodes.forEach(node => {
+                                        let txt = node.textContent.trim();
+                                        if (txt && !catText) {
+                                            if (txt.includes('·')) {
+                                                let p = txt.split('·');
+                                                if (p[0] && p[0].trim() && !p[0].match(/\\d/) && !p[0].includes('Open') && !p[0].includes('Closed')) {
+                                                    catText = p[0].trim();
+                                                }
+                                            }
+                                        }
+                                    });
+
                                     // Extract website link
                                     let web = '';
                                     let webEl = card.querySelector('a[href*="http"]:not([href*="google.com"])');
@@ -463,7 +478,7 @@ class PlacesAPI:
                                         rating: rating,
                                         total_reviews: reviews,
                                         business_status: 'OPERATIONAL',
-                                        business_types: ['Business']
+                                        business_types: catText ? [catText] : []
                                     });
                                 } catch(e) {}
                             });

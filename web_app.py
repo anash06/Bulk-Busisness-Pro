@@ -60,15 +60,30 @@ def queue_poller_thread():
             if status == "business_found":
                 biz = data.get("data")
                 if biz:
-                    # Normalize key fields for web UI rendering
-                    if "type" not in biz or not biz["type"]:
+                    # Normalize Business Type (e.g. Software Company, Mobile Shop, Gym)
+                    type_val = biz.get("type") or ""
+                    if not type_val or type_val.lower() in ["general", "business", "n/a", "unknown"]:
                         b_types = biz.get("business_types", [])
-                        biz["type"] = ", ".join([t.title() for t in b_types]) if isinstance(b_types, list) and b_types else "General"
+                        if isinstance(b_types, list) and b_types and str(b_types[0]).strip().lower() not in ["business", "general"]:
+                            type_val = ", ".join([str(t).title() for t in b_types])
+                        elif CURRENT_STATUS.get("keyword"):
+                            type_val = str(CURRENT_STATUS.get("keyword")).title()
+                        elif data.get("keyword"):
+                            type_val = str(data.get("keyword")).title()
+                        else:
+                            type_val = "Business"
+                    biz["type"] = type_val.title()
+
+                    # Normalize Status
                     if "status" not in biz or not biz["status"]:
                         b_status = str(biz.get("business_status", "OPERATIONAL")).upper()
                         biz["status"] = "Active" if "CLOSED" not in b_status else ("Temporarily Closed" if "TEMPORARILY" in b_status else "Permanently Closed")
-                    if "city" not in biz or not biz["city"]:
-                        biz["city"] = data.get("city") or CURRENT_STATUS.get("city") or ""
+
+                    # Normalize City (e.g. Kayalpatnam, Chennai)
+                    city_val = biz.get("city") or ""
+                    if not city_val or city_val.lower() in ["n/a", "unknown", ""]:
+                        city_val = data.get("city") or CURRENT_STATUS.get("city") or ""
+                    biz["city"] = city_val.title() if city_val else "Kayalpatnam"
 
                     existing_ids = {item.get("place_id") for item in WEB_RESULTS}
                     if biz.get("place_id") not in existing_ids:

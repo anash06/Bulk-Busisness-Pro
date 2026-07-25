@@ -202,7 +202,8 @@ async function handleStartSearch(e) {
     e.preventDefault();
     const keywordsStr = document.getElementById('input-keywords').value;
     const citiesStr = document.getElementById('input-cities').value;
-    const radius = parseInt(document.getElementById('input-radius').value);
+    const radiusElem = document.getElementById('input-radius');
+    const radius = radiusElem ? parseInt(radiusElem.value) : 2000;
 
     const keywords = keywordsStr.split(',').map(s => s.trim()).filter(Boolean);
     const cities = citiesStr.split(',').map(s => s.trim()).filter(Boolean);
@@ -285,9 +286,50 @@ function startStatusPolling() {
     }, 1500);
 }
 
-// Export trigger
+// Export ONLY filtered data (CSV and JSON)
 function exportData(format) {
-    window.location.href = `/api/export?format=${format}`;
+    if (!filteredData || filteredData.length === 0) {
+        showToast('No matching filtered business records to export.');
+        return;
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    
+    if (format === 'csv') {
+        const headers = ["S.No", "Business Name", "Type", "Status", "Phone", "Website", "Rating", "Reviews", "Address", "City", "State", "Country", "Latitude", "Longitude"];
+        const rows = filteredData.map((b, idx) => [
+            idx + 1,
+            `"${(b.name || '').replace(/"/g, '""')}"`,
+            `"${(b.type || '').replace(/"/g, '""')}"`,
+            `"${(b.status || 'Active').replace(/"/g, '""')}"`,
+            `"${(b.phone_number || '').replace(/"/g, '""')}"`,
+            `"${(b.website || '').replace(/"/g, '""')}"`,
+            b.rating || 0.0,
+            b.total_reviews || 0,
+            `"${(b.full_address || '').replace(/"/g, '""')}"`,
+            `"${(b.city || '').replace(/"/g, '""')}"`,
+            `"${(b.state || '').replace(/"/g, '""')}"`,
+            `"${(b.country || '').replace(/"/g, '""')}"`,
+            b.latitude || 0.0,
+            b.longitude || 0.0
+        ]);
+
+        const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Filtered_Businesses_${timestamp}.csv`;
+        link.click();
+        showToast(`Exported ${filteredData.length} filtered records to CSV!`);
+    } else if (format === 'json') {
+        const jsonContent = JSON.stringify(filteredData, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Filtered_Businesses_${timestamp}.json`;
+        link.click();
+        showToast(`Exported ${filteredData.length} filtered records to JSON!`);
+    }
 }
 
 // Save settings

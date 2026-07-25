@@ -20,17 +20,33 @@ INDIAN_STATES = {
     "uttarakhand", "himachal pradesh", "jammu and kashmir", "ladakh", "puducherry"
 }
 
+STREET_KEYWORDS = {
+    "street", "st", "road", "rd", "salai", "nagar", "colony", "near", "opp", "opposite",
+    "behind", "bus stand", "railway", "door", "no", "flat", "plot", "lane", "cross",
+    "main", "bazaar", "market", "building", "complex", "tower", "floor", "suite", "shop", "dist"
+}
+
 def extract_city_from_address(full_address: str, fallback_city: str = "") -> str:
-    """Extracts clean city name directly from full address string."""
+    """Extracts clean city name, prioritizing searched city & ignoring street names."""
+    clean_fallback = fallback_city.strip().title() if fallback_city else ""
+
     if not full_address:
-        return fallback_city.strip().title() if fallback_city else "N/A"
-    
+        return clean_fallback if clean_fallback else "N/A"
+
+    addr_lower = str(full_address).lower()
+
+    # 1. If clean fallback city is mentioned anywhere in full_address, return clean fallback
+    if clean_fallback and clean_fallback.lower() in addr_lower:
+        return clean_fallback
+
+    # 2. Parse comma-separated address parts
     cleaned = re.sub(r'\b(india|usa|united states|uk)\b', '', str(full_address), flags=re.IGNORECASE).strip()
     parts = [p.strip() for p in cleaned.split(",") if p.strip()]
-    
-    if not parts:
-        return fallback_city.strip().title() if fallback_city else "N/A"
 
+    if not parts:
+        return clean_fallback if clean_fallback else "N/A"
+
+    # Search backwards from end of address (Cities appear near state/pin code)
     for i in range(len(parts) - 1, -1, -1):
         part = parts[i]
         clean_part = re.sub(r'\b\d{5,6}\b', '', part).strip()
@@ -39,9 +55,14 @@ def extract_city_from_address(full_address: str, fallback_city: str = "") -> str
         if not clean_part or clean_lower in INDIAN_STATES:
             continue
 
+        # Skip parts containing street/building keywords or numbers
+        words = set(clean_lower.split())
+        if any(kw in clean_lower for kw in STREET_KEYWORDS) or any(w.isdigit() for w in words):
+            continue
+
         return clean_part.title()
 
-    return fallback_city.strip().title() if fallback_city else "N/A"
+    return clean_fallback if clean_fallback else "N/A"
 
 class GeocodingError(Exception):
     """Custom exception for Geocoding failures."""
